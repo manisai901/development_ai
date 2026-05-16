@@ -254,10 +254,11 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
         setStreamingContent('');
         streamingContentRef.current = '';
       },
-      (error) => {
+      async (error) => {
         console.error('Streaming error:', error);
         setIsTyping(false);
         setStreamingContent('');
+        await addMessage('assistant', `⚠️ Error: ${error.message || 'Failed to connect to AI. Please check your API key and connection.'}`);
       }
     );
   };
