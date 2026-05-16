@@ -1,7 +1,11 @@
-export interface StreamResponse {
-  content: string;
-  isDone: boolean;
-}
+import { GoogleGenAI } from '@google/genai';
+
+// Note: Storing your API key in the frontend (VITE_ prefix) is NOT recommended
+// for production applications as anyone inspecting the network can see it.
+// We are doing this here for lightweight testing and demonstration purposes.
+// For production, this logic should be moved to a backend server or Vercel serverless function.
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const streamChatCompletion = async (
   prompt: string,
@@ -9,63 +13,28 @@ export const streamChatCompletion = async (
   onFinish?: () => void,
   onError?: (error: any) => void
 ) => {
+  if (!ai) {
+    const errorMsg = "Gemini API Key is missing. Add VITE_GEMINI_API_KEY to your .env.local file and restart the server.";
+    console.error(errorMsg);
+    if (onError) onError(new Error(errorMsg));
+    return;
+  }
+
   try {
-    // Example using an abstract endpoint
-    // In a real app, this would be your backend URL e.g., import.meta.env.VITE_API_URL + '/chat'
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // 'Authorization': `Bearer ${token}` // If your backend needs Firebase token
-      },
-      body: JSON.stringify({ prompt }),
+    const responseStream = await ai.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
     });
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
-    }
-
-    if (!response.body) {
-      throw new Error('No readable stream found in response');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      const chunk = decoder.decode(value, { stream: true });
-      // Depending on the backend (e.g. OpenAI), you might need to parse SSE lines: 'data: {...}'
-      // Here we assume a raw text stream or a simplistic SSE parser for demonstration
-      
-      const lines = chunk.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') {
-            continue;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.content) {
-              onChunk(parsed.content);
-            }
-          } catch (e) {
-            // Ignore parse errors on incomplete chunks
-          }
-        } else {
-          // If the backend streams raw text instead of SSE events:
-          if (line) {
-             onChunk(line);
-          }
-        }
+    for await (const chunk of responseStream) {
+      if (chunk.text) {
+        onChunk(chunk.text);
       }
     }
 
     if (onFinish) onFinish();
   } catch (error) {
+    console.error("Gemini API Error:", error);
     if (onError) onError(error);
   }
 };
