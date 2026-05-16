@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, Sparkles, User } from 'lucide-react';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
 import { Logo } from './Navbar';
 
 interface AuthProps {
@@ -18,19 +20,32 @@ const Auth: React.FC<AuthProps> = ({ onNavigate }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
       onNavigate?.('dashboard');
-    }, 1500);
+    } catch (error) {
+      console.error('Auth error:', error);
+      alert('Authentication failed: ' + (error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleAuth = () => {
+  const handleGoogleAuth = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await signInWithPopup(auth, googleProvider);
       onNavigate?.('dashboard');
-    }, 1500);
+    } catch (error) {
+      console.error('Google Auth error:', error);
+      alert('Google Authentication failed: ' + (error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

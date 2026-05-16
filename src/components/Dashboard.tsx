@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useDashboardStats } from '../hooks/useDashboardStats';
 import {
   MessageSquare,
   Cpu,
@@ -287,6 +288,7 @@ const SimpleAreaChart: React.FC<{ data: { name: string; tokens: number }[] }> = 
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { stats, loading } = useDashboardStats();
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -326,7 +328,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <StatCard
           icon={<MessageSquare className="w-6 h-6 text-primary" />}
           label="Total Chats"
-          value="12,847"
+          value={loading ? '...' : stats.totalChats.toString()}
           change="+12%"
           changeType="up"
           delay={0.1}

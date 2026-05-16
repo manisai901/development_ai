@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useChatHistory, ChatMessage } from '../hooks/useChatHistory';
+import { streamChatCompletion } from '../lib/api';
 import {
   Send,
   Copy,
@@ -19,14 +21,6 @@ import {
 
 interface AIChatProps {
   onNavigate?: (page: string) => void;
-}
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  isTyping?: boolean;
 }
 
 const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, language = 'javascript' }) => {
@@ -84,7 +78,7 @@ const TypingIndicator: React.FC = () => (
   </div>
 );
 
-const MessageBubble: React.FC<{ message: Message; onCopyCode?: () => void }> = ({
+const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }> = ({
   message,
   onCopyCode,
 }) => {
@@ -219,23 +213,11 @@ const MessageBubble: React.FC<{ message: Message; onCopyCode?: () => void }> = (
 };
 
 const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: `Welcome to **Mani AI**! I'm your intelligent coding assistant. I can help you with:
-
-• Writing and debugging code
-• Explaining complex concepts
-• Analyzing data and architecture
-• Optimizing performance
-
-How can I assist you today?`,
-      timestamp: new Date(),
-    },
-  ]);
+  const { messages, loading, addMessage } = useChatHistory('default_chat');
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  const streamingContentRef = useRef('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -244,49 +226,40 @@ How can I assist you today?`,
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, streamingContent, isTyping]);
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: inputValue,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue('');
     setIsTyping(true);
+    streamingContentRef.current = '';
+    setStreamingContent('');
 
-    // Simulate AI response
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Great question! Here's a comprehensive answer:
+    // Add user message to Firestore
+    await addMessage('user', currentInput);
 
-Here's an example of clean, efficient code:
-
-\`\`\`javascript
-// Mani AI - Smart Code Generation
-const processData = async (data) => {
-  const result = await fetch('/api/process', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return result.json();
-};
-\`\`\`
-
-Let me know if you'd like me to explain further or help with anything else!`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 2000);
+    await streamChatCompletion(
+      currentInput,
+      (chunk) => {
+        setIsTyping(false);
+        streamingContentRef.current += chunk;
+        setStreamingContent(streamingContentRef.current);
+      },
+      async () => {
+        if (streamingContentRef.current) {
+          await addMessage('assistant', streamingContentRef.current);
+        }
+        setStreamingContent('');
+        streamingContentRef.current = '';
+      },
+      (error) => {
+        console.error('Streaming error:', error);
+        setIsTyping(false);
+        setStreamingContent('');
+      }
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -328,9 +301,19 @@ Let me know if you'd like me to explain further or help with anything else!`,
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-orange-50/30">
-        {messages.map((message) => (
+        {!loading && messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
+        {streamingContent && (
+          <MessageBubble
+            message={{
+              id: 'streaming',
+              role: 'assistant',
+              content: streamingContent,
+              timestamp: new Date(),
+            }}
+          />
+        )}
         {isTyping && (
           <div className="flex justify-start">
             <div className="flex gap-3">
