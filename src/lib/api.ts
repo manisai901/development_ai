@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // for production applications as anyone inspecting the network can see it.
 // We are doing this here for lightweight testing and demonstration purposes.
 // For production, this logic should be moved to a backend server or Vercel serverless function.
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 export const streamChatCompletion = async (
