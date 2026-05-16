@@ -237,30 +237,43 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
     streamingContentRef.current = '';
     setStreamingContent('');
 
-    // Add user message to Firestore
-    await addMessage('user', currentInput);
+    try {
+      // Add user message to Firestore
+      await addMessage('user', currentInput);
 
-    await streamChatCompletion(
-      currentInput,
-      (chunk) => {
-        setIsTyping(false);
-        streamingContentRef.current += chunk;
-        setStreamingContent(streamingContentRef.current);
-      },
-      async () => {
-        if (streamingContentRef.current) {
-          await addMessage('assistant', streamingContentRef.current);
+      await streamChatCompletion(
+        currentInput,
+        (chunk) => {
+          setIsTyping(false);
+          streamingContentRef.current += chunk;
+          setStreamingContent(streamingContentRef.current);
+        },
+        async () => {
+          if (streamingContentRef.current) {
+            await addMessage('assistant', streamingContentRef.current);
+          }
+          setStreamingContent('');
+          streamingContentRef.current = '';
+        },
+        async (error) => {
+          console.error('Streaming error:', error);
+          setIsTyping(false);
+          setStreamingContent('');
+          await addMessage('assistant', `⚠️ Error: ${error.message || 'Failed to connect to AI. Please check your API key and connection.'}`);
         }
-        setStreamingContent('');
-        streamingContentRef.current = '';
-      },
-      async (error) => {
-        console.error('Streaming error:', error);
-        setIsTyping(false);
-        setStreamingContent('');
-        await addMessage('assistant', `⚠️ Error: ${error.message || 'Failed to connect to AI. Please check your API key and connection.'}`);
+      );
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      setIsTyping(false);
+      setStreamingContent('');
+      // We can't save the error to Firestore if Firestore itself is failing, so we use local state or just alert.
+      // But we will try to add it just in case it was a different kind of error.
+      try {
+        await addMessage('assistant', `⚠️ Database Error: ${error.message || 'Failed to save message. Check Firestore Security Rules.'}`);
+      } catch (e) {
+        alert(`Failed to send message: ${error.message || 'Check Firestore Security Rules (Test Mode needed).'}`);
       }
-    );
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
