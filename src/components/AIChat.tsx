@@ -18,6 +18,7 @@ import {
   FileText,
   Sparkles,
   Plus,
+} from 'lucide-react';
 
 interface AIChatProps {
   onNavigate?: (page: string) => void;
