@@ -17,7 +17,7 @@ import {
   Code,
   FileText,
   Sparkles,
-} from 'lucide-react';
+  Plus,
 
 interface AIChatProps {
   onNavigate?: (page: string) => void;
@@ -213,7 +213,8 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
 };
 
 const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
-  const { messages, loading, addMessage } = useChatHistory('default_chat');
+  const [chatId, setChatId] = useState('default_chat');
+  const { messages, loading, addMessage } = useChatHistory(chatId);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
@@ -227,6 +228,10 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingContent, isTyping]);
+
+  const handleNewChat = () => {
+    setChatId('chat_' + Date.now().toString());
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -304,11 +309,15 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors">
-            <Settings className="w-5 h-5" />
+          <button 
+            onClick={handleNewChat}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white hover:opacity-90 transition-opacity text-sm font-medium shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            New Chat
           </button>
           <button className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors">
-            <Trash2 className="w-5 h-5" />
+            <Settings className="w-5 h-5" />
           </button>
         </div>
       </div>
