@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChatHistory, ChatMessage } from '../hooks/useChatHistory';
-import { streamChatCompletion } from '../lib/api';
+import { useChatList } from '../hooks/useChatList';
+import ChatSidebar from './ChatSidebar';
+import { streamChatCompletionViaProxy } from '../lib/api-proxy';
 import {
   Send,
   Copy,
@@ -18,13 +20,20 @@ import {
   FileText,
   Sparkles,
   Plus,
+  Menu,
+  X,
+  LogOut,
 } from 'lucide-react';
+import { auth } from '../lib/firebase';
 
 interface AIChatProps {
   onNavigate?: (page: string) => void;
 }
 
-const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code, language = 'javascript' }) => {
+const CodeBlock: React.FC<{ code: string; language?: string }> = ({
+  code,
+  language = 'javascript',
+}) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -86,12 +95,11 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
   const [liked, setLiked] = useState<boolean | null>(null);
 
   const renderContent = (content: string) => {
-    // Simple markdown-like rendering
     const parts = content.split(/(```[\s\S]*?```)/g);
 
     return parts.map((part, index) => {
       if (part.startsWith('```')) {
-        const match = part.match(/```(\w+)?\n?([\s\S]*?)```/);
+        const match = part.match(/```([\w+])?\n?([\s\S]*?)```/);
         if (match) {
           return (
             <CodeBlock
@@ -103,11 +111,13 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
         }
       }
 
-      // Simple bold and italic handling
       let processed = part
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code class="px-1 py-0.5 rounded bg-orange-100 text-primary">$1</code>');
+        .replace(
+          /`(.*?)`/g,
+          '<code class="px-1 py-0.5 rounded bg-orange-100 text-primary">$1</code>'
+        );
 
       return (
         <span
@@ -160,7 +170,13 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
               {message.isTyping ? (
                 <TypingIndicator />
               ) : (
-                <div className={`text-sm sm:text-base whitespace-pre-wrap ${message.role === 'assistant' ? 'text-gray-700' : 'text-white'}`}>
+                <div
+                  className={`text-sm sm:text-base whitespace-pre-wrap ${
+                    message.role === 'assistant'
+                      ? 'text-gray-700'
+                      : 'text-white'
+                  }`}
+                >
                   {renderContent(message.content)}
                 </div>
               )}
@@ -213,9 +229,82 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
   );
 };
 
+const SettingsModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onLogout: () => void;
+  userEmail?: string;
+}> = ({ isOpen, onClose, onLogout, userEmail }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/50 z-50 flex items-start justify-end pt-20"
+        >
+          <motion.div
+            initial={{ x: 400 }}
+            animate={{ x: 0 }}
+            exit={{ x: 400 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-xl w-full max-w-xs mx-4"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-orange-100">
+              <h2 className="font-sora font-semibold text-gray-900">Settings</h2>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-orange-50 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* User Info */}
+              <div className="p-4 rounded-xl bg-orange-50 border border-orange-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm">Account</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {userEmail || 'User'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Logout Button */}
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-colors font-medium"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
   const [chatId, setChatId] = useState('default_chat');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
   const { messages, loading, addMessage } = useChatHistory(chatId);
+  const { chats, createChat, renameChat, deleteChat, updateChatPreview } =
+    useChatList();
+
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
@@ -230,8 +319,17 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
     scrollToBottom();
   }, [messages, streamingContent, isTyping]);
 
-  const handleNewChat = () => {
-    setChatId('chat_' + Date.now().toString());
+  const handleNewChat = async () => {
+    const newChatId = await createChat('New Chat');
+    if (newChatId) {
+      setChatId(newChatId);
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleSelectChat = (id: string) => {
+    setChatId(id);
+    setSidebarOpen(false);
   };
 
   const handleSend = async () => {
@@ -244,41 +342,40 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
     setStreamingContent('');
 
     try {
-      // Add user message to Firestore
       await addMessage('user', currentInput);
 
-      await streamChatCompletion(
-        currentInput,
-        (chunk) => {
+      // Update chat preview
+      const preview = currentInput.substring(0, 50);
+      await updateChatPreview(chatId, preview);
+
+      await streamChatCompletionViaProxy({
+        prompt: currentInput,
+        onChunk: (chunk) => {
           setIsTyping(false);
           streamingContentRef.current += chunk;
           setStreamingContent(streamingContentRef.current);
         },
-        async () => {
+        onFinish: async () => {
           if (streamingContentRef.current) {
             await addMessage('assistant', streamingContentRef.current);
           }
           setStreamingContent('');
           streamingContentRef.current = '';
         },
-        async (error) => {
+        onError: async (error) => {
           console.error('Streaming error:', error);
           setIsTyping(false);
           setStreamingContent('');
-          await addMessage('assistant', `⚠️ Error: ${error.message || 'Failed to connect to AI. Please check your API key and connection.'}`);
-        }
-      );
+          await addMessage(
+            'assistant',
+            `⚠️ Error: ${error.message || 'Failed to connect to AI.'}`
+          );
+        },
+      });
     } catch (error: any) {
       console.error('Chat error:', error);
       setIsTyping(false);
       setStreamingContent('');
-      // We can't save the error to Firestore if Firestore itself is failing, so we use local state or just alert.
-      // But we will try to add it just in case it was a different kind of error.
-      try {
-        await addMessage('assistant', `⚠️ Database Error: ${error.message || 'Failed to save message. Check Firestore Security Rules.'}`);
-      } catch (e) {
-        alert(`Failed to send message: ${error.message || 'Check Firestore Security Rules (Test Mode needed).'}`);
-      }
     }
   };
 
@@ -286,6 +383,15 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      if (onNavigate) onNavigate('auth');
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -297,101 +403,159 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)]">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-orange-100 bg-white">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-r from-primary to-accent">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="font-sora font-semibold text-gray-900">AI Chat</h2>
-            <p className="text-xs text-gray-500">Powered by Mani AI</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={handleNewChat}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white hover:opacity-90 transition-opacity text-sm font-medium shadow-sm"
+    <div className="flex h-[calc(100vh-5rem)] bg-white">
+      {/* Sidebar - Desktop */}
+      <div className="hidden md:flex w-64 flex-col bg-white border-r border-orange-100">
+        <ChatSidebar
+          chats={chats}
+          activeChat={chatId}
+          onSelectChat={handleSelectChat}
+          onNewChat={handleNewChat}
+          onDeleteChat={deleteChat}
+          onRenameChat={renameChat}
+        />
+      </div>
+
+      {/* Sidebar - Mobile */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ x: -300 }}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            className="fixed inset-0 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
           >
-            <Plus className="w-4 h-4" />
-            New Chat
-          </button>
-          <button className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <div
+              className="absolute left-0 top-0 h-full w-64 bg-white"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ChatSidebar
+                chats={chats}
+                activeChat={chatId}
+                onSelectChat={handleSelectChat}
+                onNewChat={handleNewChat}
+                onDeleteChat={deleteChat}
+                onRenameChat={renameChat}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-orange-100 bg-white">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden p-2 rounded-xl hover:bg-orange-50 transition-colors"
+            >
+              {sidebarOpen ? (
+                <X className="w-5 h-5 text-gray-500" />
+              ) : (
+                <Menu className="w-5 h-5 text-gray-500" />
+              )}
+            </button>
+            <div className="p-2 rounded-xl bg-gradient-to-r from-primary to-accent">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="font-sora font-semibold text-gray-900">AI Chat</h2>
+              <p className="text-xs text-gray-500">Powered by Mani AI</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors"
+          >
             <Settings className="w-5 h-5" />
           </button>
         </div>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-orange-50/30">
-        {!loading && messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-        {streamingContent && (
-          <MessageBubble
-            message={{
-              id: 'streaming',
-              role: 'assistant',
-              content: streamingContent,
-              timestamp: new Date(),
-            }}
-          />
-        )}
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="flex gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div className="bg-white px-4 py-3 rounded-2xl border border-orange-100 shadow-sm">
-                <TypingIndicator />
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-orange-50/30">
+          {!loading && messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+          {streamingContent && (
+            <MessageBubble
+              message={{
+                id: 'streaming',
+                role: 'assistant',
+                content: streamingContent,
+                timestamp: new Date(),
+              }}
+            />
+          )}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="flex gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                <div className="bg-white px-4 py-3 rounded-2xl border border-orange-100 shadow-sm">
+                  <TypingIndicator />
+                </div>
               </div>
             </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="px-4 pb-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+            {quickActions.map((action, i) => (
+              <button
+                key={i}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-orange-200 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-colors whitespace-nowrap"
+              >
+                {action.icon}
+                {action.label}
+              </button>
+            ))}
           </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+        </div>
 
-      {/* Quick Actions */}
-      <div className="px-4 pb-2">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-          {quickActions.map((action, i) => (
+        {/* Input */}
+        <div className="p-4 border-t border-orange-100 bg-white">
+          <div className="relative">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask me anything..."
+              rows={1}
+              className="w-full px-4 py-3 pr-12 bg-orange-50 border border-orange-200 rounded-2xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-primary resize-none"
+              style={{ minHeight: '48px', maxHeight: '120px' }}
+            />
             <button
-              key={i}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-orange-200 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-colors whitespace-nowrap shadow-sm"
+              onClick={handleSend}
+              disabled={!inputValue.trim()}
+              className="absolute right-2 bottom-2 p-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform"
             >
-              {action.icon}
-              {action.label}
+              <Send className="w-4 h-4" />
             </button>
-          ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2 text-center">
+            Mani AI can make mistakes. Consider checking important information.
+          </p>
         </div>
       </div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-orange-100 bg-white">
-        <div className="relative">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask me anything..."
-            rows={1}
-            className="w-full px-4 py-3 pr-12 bg-orange-50 border border-orange-200 rounded-2xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-primary resize-none"
-            style={{ minHeight: '48px', maxHeight: '120px' }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim()}
-            className="absolute right-2 bottom-2 p-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-        <p className="text-xs text-gray-400 mt-2 text-center">
-          Mani AI can make mistakes. Consider checking important information.
-        </p>
-      </div>
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onLogout={handleLogout}
+        userEmail={auth.currentUser?.email || undefined}
+      />
     </div>
   );
 };
