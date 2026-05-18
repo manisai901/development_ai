@@ -8,6 +8,7 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  setDoc,
   serverTimestamp,
   Timestamp,
   getDocs,
@@ -96,10 +97,10 @@ export function useChatList() {
     if (!user) return;
 
     const chatRef = doc(db, 'users', user.uid, 'chats', chatId);
-    await updateDoc(chatRef, {
+    await setDoc(chatRef, {
       name: newName,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   };
 
   const deleteChat = async (chatId: string) => {
@@ -133,10 +134,11 @@ export function useChatList() {
     if (!user) return;
 
     const chatRef = doc(db, 'users', user.uid, 'chats', chatId);
-    await updateDoc(chatRef, {
+    await setDoc(chatRef, {
       preview,
+      name: chatId === 'default_chat' ? 'Default Chat' : 'New Chat',
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
   };
 
   return { chats, loading, createChat, renameChat, deleteChat, updateChatPreview };
