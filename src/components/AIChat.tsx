@@ -23,6 +23,8 @@ import {
   Menu,
   X,
   LogOut,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { auth } from '../lib/firebase';
 
@@ -315,6 +317,8 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [modelType, setModelType] = useState<'default' | 'reasoning' | 'fast' | 'lite'>('default');
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   const { messages, loading, addMessage } = useChatHistory(chatId);
   const { chats, createChat, renameChat, deleteChat, updateChatPreview } =
@@ -409,6 +413,53 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in your browser. Please try Chrome, Edge, or Safari.");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        setInputValue((prev) => {
+          const space = prev.endsWith(' ') || prev.length === 0 ? '' : ' ';
+          return prev + space + transcript;
+        });
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   };
 
   const handleLogout = async () => {
@@ -570,16 +621,29 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
               onKeyDown={handleKeyDown}
               placeholder="Ask me anything..."
               rows={1}
-              className="w-full px-4 py-3 pr-12 bg-orange-50 border border-orange-200 rounded-2xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-primary resize-none transition-[height] duration-100"
+              className="w-full px-4 py-3 pr-24 bg-orange-50 border border-orange-200 rounded-2xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-primary resize-none transition-[height] duration-100"
               style={{ minHeight: '48px', maxHeight: '160px', height: 'auto' }}
             />
-            <button
-              onClick={handleSend}
-              disabled={!inputValue.trim()}
-              className="absolute right-2 bottom-2 p-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform"
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            <div className="absolute right-2 bottom-2 flex items-center gap-1.5">
+              <button
+                onClick={handleVoiceInput}
+                className={`p-2 rounded-xl transition-all duration-300 ${
+                  isListening
+                    ? 'bg-red-500 text-white animate-pulse shadow-md shadow-red-200 scale-105'
+                    : 'bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 hover:bg-orange-100'
+                }`}
+                title={isListening ? "Listening... click to stop" : "Speak to type"}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={!inputValue.trim()}
+                className="p-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
           </div>
           <p className="text-xs text-gray-400 mt-2 text-center">
             Mani AI can make mistakes. Consider checking important information.
