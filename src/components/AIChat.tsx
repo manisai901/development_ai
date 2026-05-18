@@ -93,6 +93,13 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
   onCopyCode,
 }) => {
   const [liked, setLiked] = useState<boolean | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const renderContent = (content: string) => {
     const parts = content.split(/(```[\s\S]*?```)/g);
@@ -216,8 +223,15 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
                   >
                     <ThumbsDown className="w-4 h-4" />
                   </button>
-                  <button className="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
-                    <Copy className="w-4 h-4" />
+                  <button
+                    onClick={handleCopy}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      copied
+                        ? 'text-green-600 bg-green-50 border border-green-100'
+                        : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                    }`}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               )}
@@ -311,10 +325,19 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
   const [streamingContent, setStreamingContent] = useState('');
   const streamingContentRef = useRef('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Auto-resize input textarea as user types
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [inputValue]);
 
   useEffect(() => {
     scrollToBottom();
@@ -541,13 +564,14 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
         <div className="p-4 border-t border-orange-100 bg-white">
           <div className="relative">
             <textarea
+              ref={textareaRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask me anything..."
               rows={1}
-              className="w-full px-4 py-3 pr-12 bg-orange-50 border border-orange-200 rounded-2xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-primary resize-none"
-              style={{ minHeight: '48px', maxHeight: '120px' }}
+              className="w-full px-4 py-3 pr-12 bg-orange-50 border border-orange-200 rounded-2xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-primary resize-none transition-[height] duration-100"
+              style={{ minHeight: '48px', maxHeight: '160px', height: 'auto' }}
             />
             <button
               onClick={handleSend}
