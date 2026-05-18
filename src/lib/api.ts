@@ -34,28 +34,28 @@ const MODEL_CONFIG: Record<ModelType, string> = {
 
 const MODEL_INFO: Record<ModelType, ModelConfig> = {
   default: {
-    name: 'Gemini 2.5 Flash',
+    name: 'Mani AI 2.5 Flash',
     description: 'Latest, fastest, and most capable model. Best for all-purpose tasks.',
     useCase: 'General chat, code, creative writing',
     speed: 5,
     quality: 4,
   },
   reasoning: {
-    name: 'Gemini 2.5 Pro',
+    name: 'Mani AI 2.5 Pro',
     description: 'More advanced reasoning and complex problem-solving.',
     useCase: 'Complex logic, advanced analysis, research',
     speed: 3,
     quality: 5,
   },
   fast: {
-    name: 'Gemini 2.0 Flash',
+    name: 'Mani AI 2.0 Flash',
     description: 'Fast and reliable for most use cases.',
     useCase: 'Quick responses, simple tasks',
     speed: 4,
     quality: 4,
   },
   lite: {
-    name: 'Gemini 2.5 Flash Lite',
+    name: 'Mani AI 2.5 Lite',
     description: 'Lightweight version for quick responses.',
     useCase: 'Simple queries, fast turnaround',
     speed: 5,

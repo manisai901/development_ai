@@ -552,10 +552,10 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
               onChange={(e) => setModelType(e.target.value as any)}
               className="px-3 py-1.5 rounded-xl border border-orange-200 text-sm text-gray-700 bg-white focus:outline-none focus:border-primary shadow-sm hover:border-orange-300 transition-colors cursor-pointer font-medium"
             >
-              <option value="default">✨ Gemini 2.5 Flash</option>
-              <option value="reasoning">🧠 Gemini 2.5 Pro</option>
-              <option value="fast">⚡ Gemini 2.0 Flash</option>
-              <option value="lite">🎈 Gemini 2.5 Lite</option>
+              <option value="default">✨ Mani AI 2.5 Flash</option>
+              <option value="reasoning">🧠 Mani AI 2.5 Pro</option>
+              <option value="fast">⚡ Mani AI 2.0 Flash</option>
+              <option value="lite">🎈 Mani AI 2.5 Lite</option>
             </select>
             <button
               onClick={() => setShowSettings(true)}
