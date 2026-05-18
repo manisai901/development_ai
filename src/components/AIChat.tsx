@@ -300,6 +300,7 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
   const [chatId, setChatId] = useState('default_chat');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [modelType, setModelType] = useState<'default' | 'reasoning' | 'fast' | 'lite'>('default');
 
   const { messages, loading, addMessage } = useChatHistory(chatId);
   const { chats, createChat, renameChat, deleteChat, updateChatPreview } =
@@ -350,6 +351,7 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
 
       await streamChatCompletionViaProxy({
         prompt: currentInput,
+        modelType,
         onChunk: (chunk) => {
           setIsTyping(false);
           streamingContentRef.current += chunk;
@@ -470,12 +472,24 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
               <p className="text-xs text-gray-500">Powered by Mani AI</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={modelType}
+              onChange={(e) => setModelType(e.target.value as any)}
+              className="px-3 py-1.5 rounded-xl border border-orange-200 text-sm text-gray-700 bg-white focus:outline-none focus:border-primary shadow-sm hover:border-orange-300 transition-colors cursor-pointer font-medium"
+            >
+              <option value="default">✨ Gemini 2.5 Flash</option>
+              <option value="reasoning">🧠 Gemini 2.5 Pro</option>
+              <option value="fast">⚡ Gemini 2.0 Flash</option>
+              <option value="lite">🎈 Gemini 2.5 Lite</option>
+            </select>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}

@@ -1,10 +1,12 @@
 export async function streamChatCompletionViaProxy({
   prompt,
+  modelType = 'default',
   onChunk,
   onFinish,
   onError,
 }: {
   prompt: string;
+  modelType?: string;
   onChunk: (chunk: string) => void;
   onFinish?: () => void;
   onError?: (error: Error) => void;
@@ -13,7 +15,7 @@ export async function streamChatCompletionViaProxy({
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, modelType }),
     });
 
     if (!response.body) throw new Error('No response body');

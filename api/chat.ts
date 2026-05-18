@@ -25,17 +25,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   let prompt: string = '';
+  let modelType: string = 'default';
   try {
     const body = JSON.parse(json || '{}');
     prompt = body?.prompt || '';
+    modelType = body?.modelType || 'default';
     if (!prompt) throw new Error('No prompt');
   } catch {
     res.status(400).end('Invalid payload');
     return;
   }
 
+  const MODEL_CONFIG: Record<string, string> = {
+    default: 'gemini-2.5-flash',
+    reasoning: 'gemini-2.5-pro',
+    fast: 'gemini-2.0-flash',
+    lite: 'gemini-2.5-flash-lite',
+  };
+
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); // or modifiable via req
+    const selectedModel = MODEL_CONFIG[modelType] || MODEL_CONFIG.default;
+    const model = genAI.getGenerativeModel({ model: selectedModel });
     const streamResult = await model.generateContentStream(prompt);
 
     res.setHeader('Content-Type', 'text/event-stream');
