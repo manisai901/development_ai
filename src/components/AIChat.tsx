@@ -45,7 +45,7 @@ const CodeBlock: React.FC<{ code: string; language?: string }> = ({
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group w-full max-w-full overflow-hidden">
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={handleCopy}
@@ -54,17 +54,17 @@ const CodeBlock: React.FC<{ code: string; language?: string }> = ({
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
         </button>
       </div>
-      <div className="bg-orange-50 rounded-xl p-4 overflow-x-auto border border-orange-100">
-        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-orange-200">
+      <div className="bg-orange-50 rounded-xl p-3 sm:p-4 overflow-x-auto border border-orange-100 w-full max-w-full">
+        <div className="flex items-center justify-between mb-3 pb-3 border-b border-orange-200">
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-400" />
-            <div className="w-3 h-3 rounded-full bg-yellow-400" />
-            <div className="w-3 h-3 rounded-full bg-green-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+            <span className="text-[10px] sm:text-xs text-gray-500 ml-2 font-mono">{language}</span>
           </div>
-          <span className="text-xs text-gray-500 ml-2">{language}</span>
         </div>
-        <pre className="text-sm">
-          <code className="text-gray-700">{code}</code>
+        <pre className="text-xs sm:text-sm overflow-x-auto w-full max-w-full">
+          <code className="text-gray-700 block whitespace-pre">{code}</code>
         </pre>
       </div>
     </div>
@@ -125,7 +125,7 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .replace(
           /`(.*?)`/g,
-          '<code class="px-1 py-0.5 rounded bg-orange-100 text-primary">$1</code>'
+          '<code class="px-1 py-0.5 rounded bg-orange-100 text-primary break-all">$1</code>'
         );
 
       return (
@@ -145,7 +145,7 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
       className={`flex w-full ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
     >
       <div
-        className={`max-w-[90%] md:max-w-[80%] lg:max-w-[70%] flex flex-col ${
+        className={`max-w-[95%] sm:max-w-[85%] md:max-w-[80%] lg:max-w-[70%] flex flex-col ${
           message.role === 'user' ? 'items-end' : 'items-start'
         }`}
       >
@@ -155,24 +155,24 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
           }`}
         >
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+            className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
               message.role === 'user'
                 ? 'bg-gradient-to-r from-primary to-accent'
                 : 'bg-gradient-to-r from-amber-400 to-orange-400'
             }`}
           >
             {message.role === 'user' ? (
-              <User className="w-5 h-5 text-white" />
+              <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             ) : (
-              <Bot className="w-5 h-5 text-white" />
+              <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             )}
           </div>
 
-          <div className="space-y-2 min-w-0">
+          <div className="space-y-2 min-w-0 flex-1">
             <div
-              className={`px-3 sm:px-4 py-3 rounded-2xl overflow-x-auto ${
+              className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl w-full overflow-hidden break-words ${
                 message.role === 'user'
-                  ? 'bg-gradient-to-r from-primary to-orange-500 text-white rounded-tr-md'
+                  ? 'bg-gradient-to-r from-primary to-orange-500 text-white rounded-tr-md shadow-sm'
                   : 'bg-white rounded-tl-md border border-orange-100 shadow-sm'
               }`}
             >
@@ -213,7 +213,7 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
                         : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
                     }`}
                   >
-                    <ThumbsUp className="w-4 h-4" />
+                    <ThumbsUp className="w-3.5 h-3.5 sm:w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setLiked(false)}
@@ -223,7 +223,7 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
                         : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
                     }`}
                   >
-                    <ThumbsDown className="w-4 h-4" />
+                    <ThumbsDown className="w-3.5 h-3.5 sm:w-4 h-4" />
                   </button>
                   <button
                     onClick={handleCopy}
@@ -233,7 +233,7 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
                         : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
                     }`}
                   >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? <Check className="w-3.5 h-3.5 sm:w-4 h-4" /> : <Copy className="w-3.5 h-3.5 sm:w-4 h-4" />}
                   </button>
                 </div>
               )}
@@ -526,11 +526,11 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-orange-100 bg-white">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-orange-100 bg-white">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2 rounded-xl hover:bg-orange-50 transition-colors"
+              className="md:hidden p-1.5 sm:p-2 rounded-xl hover:bg-orange-50 transition-colors flex-shrink-0"
             >
               {sidebarOpen ? (
                 <X className="w-5 h-5 text-gray-500" />
@@ -538,36 +538,36 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
                 <Menu className="w-5 h-5 text-gray-500" />
               )}
             </button>
-            <div className="p-2 rounded-xl bg-gradient-to-r from-primary to-accent">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="p-1.5 sm:p-2 rounded-xl bg-gradient-to-r from-primary to-accent flex-shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div>
-              <h2 className="font-sora font-semibold text-gray-900">AI Chat</h2>
-              <p className="text-xs text-gray-500">Powered by Mani AI</p>
+            <div className="min-w-0">
+              <h2 className="font-sora font-semibold text-gray-900 text-sm sm:text-base truncate">AI Chat</h2>
+              <p className="text-xs text-gray-500 hidden sm:block">Powered by Mani AI</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <select
               value={modelType}
               onChange={(e) => setModelType(e.target.value as any)}
-              className="px-3 py-1.5 rounded-xl border border-orange-200 text-sm text-gray-700 bg-white focus:outline-none focus:border-primary shadow-sm hover:border-orange-300 transition-colors cursor-pointer font-medium"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-orange-200 text-xs sm:text-sm text-gray-700 bg-white focus:outline-none focus:border-primary shadow-sm hover:border-orange-300 transition-colors cursor-pointer font-medium max-w-[110px] sm:max-w-none"
             >
-              <option value="default">✨ Mani AI 2.5 Flash</option>
-              <option value="reasoning">🧠 Mani AI 2.5 Pro</option>
-              <option value="fast">⚡ Mani AI 2.0 Flash</option>
-              <option value="lite">🎈 Mani AI 2.5 Lite</option>
+              <option value="default">✨ 2.5 Flash</option>
+              <option value="reasoning">🧠 2.5 Pro</option>
+              <option value="fast">⚡ 2.0 Flash</option>
+              <option value="lite">🎈 2.5 Lite</option>
             </select>
             <button
               onClick={() => setShowSettings(true)}
-              className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl bg-orange-50 border border-orange-200 text-gray-500 hover:text-orange-600 transition-colors flex-shrink-0"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-orange-50/30">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 space-y-4 sm:space-y-6 bg-orange-50/30">
           {!loading && messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
@@ -582,12 +582,12 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
             />
           )}
           {isTyping && (
-            <div className="flex justify-start">
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
+            <div className="flex justify-start w-full">
+              <div className="flex gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <div className="bg-white px-4 py-3 rounded-2xl border border-orange-100 shadow-sm">
+                <div className="bg-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-orange-100 shadow-sm flex items-center">
                   <TypingIndicator />
                 </div>
               </div>
@@ -612,7 +612,7 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-orange-100 bg-white">
+        <div className="p-2.5 sm:p-4 border-t border-orange-100 bg-white">
           <div className="relative">
             <textarea
               ref={textareaRef}
