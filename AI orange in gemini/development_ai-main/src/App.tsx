@@ -13,32 +13,10 @@ import './index.css';
 type PageType = 'landing' | 'dashboard' | 'chat' | 'auth' | 'settings' | 'features' | 'pricing' | 'about';
 
 function App() {
-  const getInitialPage = (): PageType => {
-    const hash = window.location.hash.replace('#', '') as PageType;
-    const validPages: PageType[] = ['landing', 'dashboard', 'chat', 'auth', 'settings', 'features', 'pricing', 'about'];
-    return validPages.includes(hash) ? hash : 'landing';
-  };
-
-  const [currentPage, setCurrentPage] = useState<PageType>(getInitialPage);
-
-  React.useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPage(getInitialPage());
-    };
-    
-    if (!window.location.hash || window.location.hash === '#') {
-      window.history.replaceState(null, '', '#landing');
-    }
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  const [currentPage, setCurrentPage] = useState<PageType>('landing');
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page as PageType);
-    if (window.location.hash !== `#${page}`) {
-      window.history.pushState(null, '', `#${page}`);
-    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -69,7 +47,7 @@ function App() {
   const showFooter = !['auth', 'chat'].includes(currentPage);
 
   return (
-    <div className="min-h-screen bg-dark overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-dark">
       {showNavbar && <Navbar currentPage={currentPage} onNavigate={handleNavigate} />}
       <main className={showNavbar ? '' : ''}>
         <AnimatePresence mode="wait">
