@@ -142,15 +142,15 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+      className={`flex w-full ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
     >
       <div
-        className={`max-w-[80%] lg:max-w-[70%] ${
+        className={`max-w-[90%] md:max-w-[80%] lg:max-w-[70%] flex flex-col ${
           message.role === 'user' ? 'items-end' : 'items-start'
         }`}
       >
         <div
-          className={`flex gap-3 ${
+          className={`flex gap-2 sm:gap-3 w-full ${
             message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
           }`}
         >
@@ -168,9 +168,9 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <div
-              className={`px-4 py-3 rounded-2xl ${
+              className={`px-3 sm:px-4 py-3 rounded-2xl overflow-x-auto ${
                 message.role === 'user'
                   ? 'bg-gradient-to-r from-primary to-orange-500 text-white rounded-tr-md'
                   : 'bg-white rounded-tl-md border border-orange-100 shadow-sm'
@@ -180,7 +180,7 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
                 <TypingIndicator />
               ) : (
                 <div
-                  className={`text-sm sm:text-base whitespace-pre-wrap ${
+                  className={`text-sm sm:text-base whitespace-pre-wrap break-words ${
                     message.role === 'assistant'
                       ? 'text-gray-700'
                       : 'text-white'
