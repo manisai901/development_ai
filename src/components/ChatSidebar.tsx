@@ -8,6 +8,7 @@ import {
   Edit2,
   Check,
   X,
+  Home,
 } from 'lucide-react';
 
 interface ChatSidebarProps {
@@ -17,6 +18,7 @@ interface ChatSidebarProps {
   onNewChat: () => void;
   onDeleteChat: (chatId: string) => void;
   onRenameChat: (chatId: string, newName: string) => void;
+  onNavigate?: (page: string) => void;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -26,6 +28,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onNewChat,
   onDeleteChat,
   onRenameChat,
+  onNavigate,
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -193,6 +196,19 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           </div>
         )}
       </div>
+
+      {/* Go to Dashboard */}
+      {onNavigate && (
+        <div className="p-4 border-t border-orange-100 bg-orange-50/30 flex-shrink-0">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 text-gray-700 hover:bg-orange-50 hover:text-primary transition-all font-semibold text-sm shadow-sm"
+          >
+            <Home className="w-4 h-4" />
+            Go to Dashboard
+          </button>
+        </div>
+      )}
     </div>
   );
 };

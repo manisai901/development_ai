@@ -65,7 +65,7 @@ function App() {
     }
   };
 
-  const showNavbar = !['auth'].includes(currentPage);
+  const showNavbar = !['auth', 'chat'].includes(currentPage);
   const showFooter = !['auth', 'chat'].includes(currentPage);
 
   return (

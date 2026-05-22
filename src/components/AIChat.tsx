@@ -25,6 +25,8 @@ import {
   LogOut,
   Mic,
   MicOff,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { auth } from '../lib/firebase';
 
@@ -96,12 +98,45 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
 }) => {
   const [liked, setLiked] = useState<boolean | null>(null);
   const [copied, setCopied] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleSpeak = () => {
+    if ('speechSynthesis' in window) {
+      if (speaking) {
+        window.speechSynthesis.cancel();
+        setSpeaking(false);
+      } else {
+        window.speechSynthesis.cancel();
+        
+        const cleanText = message.content
+          .replace(/```[\s\S]*?```/g, '') // remove code blocks
+          .replace(/<[^>]*>/g, '') // remove html tags
+          .replace(/[*_`#]/g, ''); // remove markdown chars
+          
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.onend = () => setSpeaking(false);
+        utterance.onerror = () => setSpeaking(false);
+        window.speechSynthesis.speak(utterance);
+        setSpeaking(true);
+      }
+    } else {
+      alert("Text-to-speech is not supported in your browser.");
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   const renderContent = (content: string) => {
     const parts = content.split(/(```[\s\S]*?```)/g);
@@ -224,6 +259,17 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
                     }`}
                   >
                     <ThumbsDown className="w-3.5 h-3.5 sm:w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleSpeak}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      speaking
+                        ? 'text-primary bg-orange-100 animate-pulse'
+                        : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                    }`}
+                    title={speaking ? "Stop listening" : "Listen to answer"}
+                  >
+                    {speaking ? <VolumeX className="w-3.5 h-3.5 sm:w-4 h-4" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 h-4" />}
                   </button>
                   <button
                     onClick={handleCopy}
@@ -479,9 +525,9 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] bg-white">
+    <div className="flex h-screen h-[100dvh] bg-white overflow-hidden w-full">
       {/* Sidebar - Desktop */}
-      <div className="hidden md:flex w-64 flex-col bg-white border-r border-orange-100">
+      <div className="hidden md:flex w-64 flex-col bg-white border-r border-orange-100 flex-shrink-0">
         <ChatSidebar
           chats={chats}
           activeChat={chatId}
@@ -489,6 +535,7 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
           onNewChat={handleNewChat}
           onDeleteChat={deleteChat}
           onRenameChat={renameChat}
+          onNavigate={onNavigate}
         />
       </div>
 
@@ -517,6 +564,7 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
                 onNewChat={handleNewChat}
                 onDeleteChat={deleteChat}
                 onRenameChat={renameChat}
+                onNavigate={onNavigate}
               />
             </div>
           </motion.div>
