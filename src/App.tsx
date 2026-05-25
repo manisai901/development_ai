@@ -68,10 +68,16 @@ function App() {
   const showNavbar = !['auth', 'chat'].includes(currentPage);
   const showFooter = !['auth', 'chat'].includes(currentPage);
 
+  const isChatPage = currentPage === 'chat';
+
   return (
-    <div className="min-h-screen bg-dark overflow-x-hidden w-full max-w-full">
+    <div className={
+      isChatPage
+        ? "h-screen h-[100dvh] overflow-hidden bg-white w-full max-w-full flex flex-col"
+        : "min-h-screen bg-dark overflow-x-hidden w-full max-w-full"
+    }>
       {showNavbar && <Navbar currentPage={currentPage} onNavigate={handleNavigate} />}
-      <main className={showNavbar ? '' : ''}>
+      <main className={isChatPage ? "flex-1 h-full overflow-hidden w-full max-w-full min-h-0 min-w-0" : ""}>
         <AnimatePresence mode="wait">
           <React.Fragment key={currentPage}>
             {renderPage()}

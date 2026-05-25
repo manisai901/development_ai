@@ -181,7 +181,7 @@ const MessageBubble: React.FC<{ message: ChatMessage; onCopyCode?: () => void }>
       className={`flex w-full ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
     >
       <div
-        className={`max-w-[95%] sm:max-w-[85%] md:max-w-[80%] lg:max-w-[70%] flex flex-col ${
+        className={`max-w-[90%] sm:max-w-[85%] md:max-w-[80%] lg:max-w-[70%] min-w-0 flex flex-col ${
           message.role === 'user' ? 'items-end' : 'items-start'
         }`}
       >
@@ -573,7 +573,7 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-full min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-orange-100 bg-white">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
