@@ -587,8 +587,8 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
                 <Menu className="w-5 h-5 text-gray-500" />
               )}
             </button>
-            <button
-              onClick={() => onNavigate && onNavigate('landing')}
+            <a
+              href="https://development-ai.vercel.app"
               className="flex items-center gap-2 sm:gap-3 text-left hover:opacity-80 transition-opacity focus:outline-none"
             >
               <div className="flex-shrink-0">
@@ -598,7 +598,7 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
                 <h2 className="font-sora font-semibold text-gray-900 text-sm sm:text-base truncate">AI Chat</h2>
                 <p className="text-xs text-gray-500 hidden sm:block">Powered by Mani AI</p>
               </div>
-            </button>
+            </a>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <select

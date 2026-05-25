@@ -65,15 +65,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     <div className="flex flex-col h-full bg-white border-r border-orange-100">
       {/* Brand Header */}
       <div className="p-4 border-b border-orange-100 flex items-center justify-between">
-        <button
-          onClick={() => onNavigate && onNavigate('landing')}
+        <a
+          href="https://development-ai.vercel.app"
           className="flex items-center gap-2.5 group text-left focus:outline-none"
         >
           <Logo size="sm" />
           <span className="font-sora font-bold text-lg text-gray-900 group-hover:text-primary transition-colors">
             Mani AI
           </span>
-        </button>
+        </a>
       </div>
 
       {/* Header */}

@@ -113,15 +113,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentPage = 'landing', onNavigate }) 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <button
-              onClick={() => handleNavigate('landing')}
+            <a
+              href="https://development-ai.vercel.app"
               className="flex items-center gap-3 group"
             >
               <Logo size="md" />
               <span className="font-sora font-bold text-xl text-gray-900 group-hover:text-primary transition-colors">
                 Mani AI
               </span>
-            </button>
+            </a>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
