@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useChatHistory, ChatMessage } from '../hooks/useChatHistory';
 import { useChatList } from '../hooks/useChatList';
 import ChatSidebar from './ChatSidebar';
+import { Logo } from './Navbar';
 import { streamChatCompletionViaProxy } from '../lib/api-proxy';
 import {
   Send,
@@ -586,13 +587,18 @@ const AIChat: React.FC<AIChatProps> = ({ onNavigate }) => {
                 <Menu className="w-5 h-5 text-gray-500" />
               )}
             </button>
-            <div className="p-1.5 sm:p-2 rounded-xl bg-gradient-to-r from-primary to-accent flex-shrink-0">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="font-sora font-semibold text-gray-900 text-sm sm:text-base truncate">AI Chat</h2>
-              <p className="text-xs text-gray-500 hidden sm:block">Powered by Mani AI</p>
-            </div>
+            <button
+              onClick={() => onNavigate && onNavigate('landing')}
+              className="flex items-center gap-2 sm:gap-3 text-left hover:opacity-80 transition-opacity focus:outline-none"
+            >
+              <div className="flex-shrink-0">
+                <Logo size="sm" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-sora font-semibold text-gray-900 text-sm sm:text-base truncate">AI Chat</h2>
+                <p className="text-xs text-gray-500 hidden sm:block">Powered by Mani AI</p>
+              </div>
+            </button>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <select
